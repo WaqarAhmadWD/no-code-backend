@@ -1,0 +1,191 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=fallback");
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+
+/* Additional styles */
+@import "additional-styles/utility-patterns.css";
+
+@import "tailwindcss/utilities";
+
+/* utilities */
+.blue-text {
+  color: rgba(74, 144, 226, 1);
+}
+
+.blue-bg {
+  background-color: rgba(74, 144, 226, 1);
+}
+.darkblue-bg {
+  background: rgba(29, 60, 106, 1);
+}
+
+.font-weight700 {
+  font-weight: 700;
+}
+
+.font-size-10 {
+  font-size: 10px;
+}
+
+/* utilities */
+
+body {
+  background: rgba(246, 246, 250, 1);
+}
+
+.sidemenu-sec {
+  margin-left: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px !important;
+}
+
+/* header */
+.header-sec {
+  background-color: white !important;
+  border-radius: 10px !important;
+}
+
+.username {
+  color: rgba(74, 144, 226, 1);
+  font-weight: 700;
+}
+
+.welcome-note,
+.user-role {
+  color: rgba(117, 117, 117, 1);
+  font-weight: 400;
+  font-size: 10px !important;
+}
+
+.user-avatar {
+  border-radius: 50px !important;
+  border: 3px solid rgba(74, 144, 226, 1);
+}
+
+.more {
+  border: 0.2px solid rgba(92, 92, 92, 1);
+  border-radius: 50px !important;
+}
+
+.user-name {
+  color: rgba(64, 64, 64, 1);
+  font-weight: 700;
+  font-size: 10px !important;
+}
+
+/* header */
+
+/* sidebar */
+
+@media (min-width: 1023px) {
+  .sidemenu-sec {
+    position: relative;
+    height: 87vh !important;
+  }
+
+  .burger-menu-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.outer{
+  height: 93.4vh;
+}
+
+/* sidebar */
+
+/* userRole-page */
+.add-role {
+  background: rgba(29, 60, 106, 1);
+}
+.user-role-sec input {
+  border: 0.6px solid rgba(0, 0, 0, 1);
+  background: rgba(245, 246, 250, 1);
+  padding: 1px 30px;
+  border-radius: 5px;
+}
+.user-role-sec input::placeholder {
+  font-size: 12px;
+}
+.searc-outer {
+  position: relative;
+}
+.searc-outer .search-icon {
+  position: absolute;
+  left: 9px;
+  top: 3px;
+}
+
+.modal-body input {
+  padding: 7px;
+}
+/* userRole-page */
+
+/* login */
+.site-logo {
+  width: 70%;
+  margin: 0 auto;
+}
+
+.inpt-icons {
+  top: 13px;
+  left: 10px;
+}
+/* login */
+
+.Active {
+  background: rgba(74, 144, 226, 1);
+  color: white ;
+}
+
+
+
+
+
+
+
+/* Sidebar container */
+.sidebar {
+  width: 200px; /* Expanded width */
+  transition: width 0.3s ease;
+  overflow: hidden; /* Prevent content from overflowing when collapsed */
+}
+
+/* Class for collapsed state */
+.sidebar.collapsed {
+  width: 60px; /* Collapsed width */
+}
+
+/* Sidebar items */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Sidebar icon */
+.sidebar-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+/* Sidebar text */
+.sidebar-text {
+  display: inline-block;
+  margin-left: 10px;
+  transition: opacity 0.3s ease;
+}
+
+/* Hide text when collapsed */
+.sidebar.collapsed .sidebar-text {
+  opacity: 0; /* Make the text invisible when collapsed */
+  pointer-events: none; /* Prevent any interaction with the hidden text */
+}
+
+
