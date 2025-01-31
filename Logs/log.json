@@ -1,0 +1,38 @@
+[
+  {
+    "timestamp": "2025-01-23T13:20:59.830Z",
+    "method": "GET",
+    "url": "/logs?clearLogs=true",
+    "requestHeaders": {
+      "host": "localhost:4000",
+      "connection": "keep-alive",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+      "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"Google Chrome\";v=\"132\"",
+      "sec-ch-ua-mobile": "?0",
+      "accept": "*/*",
+      "sec-fetch-site": "same-origin",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-dest": "empty",
+      "referer": "http://localhost:4000/history",
+      "accept-encoding": "gzip, deflate, br, zstd",
+      "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+      "cookie": "_ga=GA1.1.136533815.1737634397; _ga_DLXFK5JXNF=GS1.1.1737634396.1.0.1737634406.0.0.0; token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiU3VwZXIgQWRtaW4iLCJzbHVnIjoiYWRtaW5fMzNlYTllN2ZkYTRiM2M1ZCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwiaWF0IjoxNzM3NjM3MDEwLCJleHAiOjE3Mzc2NjU4MTB9.8iv9ZIY-kCreGJ-E24oVHb26FNJ8ONAfkZBtzftABPs",
+      "if-none-match": "W/\"1b-7fEMogTTALP83Q4ajwy8tIq8wqQ\""
+    },
+    "requestBody": {},
+    "statusCode": 200,
+    "responseHeaders": {
+      "x-powered-by": "Express",
+      "vary": "Origin",
+      "access-control-allow-credentials": "true",
+      "x-ratelimit-limit": "1000",
+      "x-ratelimit-remaining": "997",
+      "date": "Thu, 23 Jan 2025 13:20:59 GMT",
+      "x-ratelimit-reset": "1737639353",
+      "content-type": "application/json; charset=utf-8"
+    },
+    "responseBody": "{\"message\":\"Logs cleared.\"}",
+    "responseTime": 2
+  }
+]
