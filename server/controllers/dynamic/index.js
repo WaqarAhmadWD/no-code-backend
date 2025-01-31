@@ -11,6 +11,12 @@ module.exports = async (req, res, { httpMethod, module, method, id }) => {
     if (!sequelize.models[module]) {
       return res.status(404).json({ message: "module not found", data:{message:"avaliable modules",modules:Object.keys(sequelize.models)} });
     }
+    let hasReferences = [];
+    let where = {};
+    let includes = [];
+    if(req.query.populate){
+      hasReferences = Object.values(model.rawAttributes).map(e=>e?.references || null).filter(e=>e!=null)
+    }
     if (httpMethod === "GET" && method === "get") {
       if (id) {
         const data = await sequelize.models[module].findByPk(id);
@@ -22,6 +28,8 @@ module.exports = async (req, res, { httpMethod, module, method, id }) => {
           .json({ message: `${module} data fetched successfully`, data });
       }
       const model = sequelize.models[module];
+
+      console.log(hasReferences)
       const columns = Object.keys(model.rawAttributes);
       let columns_found = [];
       if(req?.search){
@@ -33,7 +41,10 @@ module.exports = async (req, res, { httpMethod, module, method, id }) => {
           }
         }).filter(column => column!=null);
       }
-      const data = await model.findAll({...req.pagination,...(req.search?{where:{[Op.or]:columns_found}}:{})});
+      if(req.search){
+        where={...where,[Op.or]:columns_found};
+      }
+      const data = await model.findAll({...req.pagination,where});
       return res
         .status(200)
         .json({ message: `${module} data fetched successfully`, data });

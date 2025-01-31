@@ -10,11 +10,11 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
-      table_id: {
+      field_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "table",
+          model: "field_id",
           key: "id",
         },
       },

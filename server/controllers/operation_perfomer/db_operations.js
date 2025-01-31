@@ -3,6 +3,6 @@ exports.createTables = async(model)=>{
         const getAllTables = await model.table.findAll();
         console.log(getAllTables.map(e=>e.name)); 
     } catch (error) {
-        throw new Error("Couldn't find table");
+       console.error("Error in DB Operations:",error)
     }
 }
