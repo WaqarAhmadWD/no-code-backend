@@ -28,16 +28,7 @@ const routes = [
     name:"user",
   },
   { path: "/", Element: lazy(() => import("./views")), name:"dashboard" },
-  {
-    path: "/manage",
-    Element: lazy(() => import("./views/dashboard/userManagment")),
-    name:"user"
-  },
-  {
-    path: "/setting",
-    Element: lazy(() => import("./views/dashboard/setting")),
-    name:"setting"
-  },
+
 
   { path: "/*", Element: lazy(() => import("./views/NotFound")) },
 ];
