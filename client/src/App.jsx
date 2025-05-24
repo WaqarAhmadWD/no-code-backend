@@ -9,7 +9,8 @@ import Auth from "./layouts/Auth";
 import Dashboard from "./layouts/Dashboard";
 import routes from "./router";
 function App() {
-  const isUser = !!localStorage.getItem("user");
+  // const isUser = !!localStorage.getItem("user");
+  const isUser = true;
   const roles = JSON.parse(localStorage.getItem("roles") || `[]`);
   const isAdmin = !!roles?.find(e => e?.name === "super_admin");
   let modules = JSON.parse(localStorage.getItem("modules") || `[]`);

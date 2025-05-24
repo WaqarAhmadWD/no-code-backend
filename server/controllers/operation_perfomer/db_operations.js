@@ -1,7 +1,7 @@
-const attribute = require("../models/attribute");
-const Sequelize = require("sequelize");
-const fs = require('fs');
-const path = require('path');
+const db = require("../../configDB");
+const fs = require("fs").promises;
+const path = require("path");
+
 function appendKeyToModuleExports(codeStr, key) {
     // Create a regex to check for the property name followed by an optional whitespace and a colon.
     const keyRegex = new RegExp("\\b" + key + "\\s*:");
@@ -32,41 +32,58 @@ function appendKeyToModuleExports(codeStr, key) {
       codeStr.slice(0, lastBraceIndex) + insertion + codeStr.slice(lastBraceIndex);
     return modifiedCode;
   }
-exports.createTables = async (model) => {
-    try {
-      const getAllTables = await model.table.findAll({
-        include: { all: true, nested: true },
-      });
-    
-      getAllTables.forEach((table) => {
-        // Extract table name
-        const tableName = table.name;
-    
-        // Format fields for Sequelize model
-        const fields = table.fields.reduce((acc, field) => {
-          acc[field.name] = field.attributes.reduce((fieldAcc, attr) => {
-            if(attr.value==="true"){
-                attr.value = true;
-            }
-            if(attr.value==="false"){
-                attr.value = false;
-            }
-            fieldAcc[attr.name] = attr.value
-       
-            return fieldAcc;
-          }, {});
-          return acc;
-        }, {});
-        let transformedFields = JSON.stringify(fields, null, 2);
 
-        // Step 3: Remove quotes around keys
-        transformedFields = transformedFields.replace(/"([^"]+)":/g, '$1:');
-        
-        // Step 4: Remove quotes around Sequelize types
-        transformedFields = transformedFields.replace(/"Sequelize\.(\w+)"/g, 'Sequelize.$1');
-        // .replace(/"Sequelize\.(\w+)"/g, 'Sequelize.$1');
-        // Generate Sequelize model template
-        const modelTemplate = `
+const modelsDir = path.join(__dirname, "..", "models");
+const dynamicModel = path.join(modelsDir, "dynamic");
+const moduleExporting = path.join(modelsDir, "dynamic_index.js");
+
+exports.createTables = async (req, res) => {
+  try {
+    const getAllTables = await db.module.table.findAll({
+      include: { all: true, nested: true },
+    });
+
+    if (getAllTables?.length === 0) {
+      // Overwrite dynamic_index.js with empty export
+      await fs.writeFile(moduleExporting, "module.exports = (sequelize, Sequelize) => ({})");
+
+      // Read and delete all files in the dynamic folder
+      const files = await fs.readdir(dynamicModel);
+
+      await Promise.all(
+        files.map(async (file) => {
+          const filePath = path.join(dynamicModel, file);
+          const stat = await fs.lstat(filePath);
+          if (stat.isFile() && file !== "dynamic_index.js") {
+            await fs.unlink(filePath);
+          }
+        })
+      );
+
+      return res.status(200).json({
+        message: "Flushed (deleted) Successfully",
+        data: [],
+      });
+    }
+
+    for (const table of getAllTables) {
+      const tableName = table.name;
+
+      const fields = table.fields.reduce((acc, field) => {
+        acc[field.name] = field.attributes.reduce((fieldAcc, attr) => {
+          if (attr.value === "true") attr.value = true;
+          if (attr.value === "false") attr.value = false;
+          fieldAcc[attr.name] = attr.value;
+          return fieldAcc;
+        }, {});
+        return acc;
+      }, {});
+
+      let transformedFields = JSON.stringify(fields, null, 2)
+        .replace(/"([^"]+)":/g, "$1:")
+        .replace(/"Sequelize\.(\w+)"/g, "Sequelize.$1");
+
+      const modelTemplate = `
     module.exports = (sequelize, Sequelize) => {
       const ${tableName} = sequelize.define(
         '${tableName}',
@@ -83,30 +100,34 @@ exports.createTables = async (model) => {
       return ${tableName};
     };
     `;
-        // console.log(modelTemplate)
-        // Define file path
-        const filePath = path.join(__dirname, "..", "models", "dynamic", `${tableName}.js`);
-        
 
-        // Check if file already exists
-        if (fs.existsSync(filePath)) {
-          console.log(`Model for table "${tableName}" already exists. Skipping...`);
-          return;
-        }
-        const moduleExporting = path.join(__dirname, "..", "models", "dynamic_index.js");
-        fs.readFile(moduleExporting,function(err, data) {
-            // console.log(err,data.toString());
-            if(err){
-                return;
-            }
-            const updatedDynamicIndex = appendKeyToModuleExports(data.toString(),tableName);
-            fs.writeFileSync(moduleExporting,updatedDynamicIndex)
-        });
-        // Write the model to a file
-        fs.writeFileSync(filePath, modelTemplate);
-        console.log(`Model written to file: ${filePath}`);
-      });
-    } catch (error) {
-      console.error("Error in DB Operations:", error);
+      const filePath = path.join(dynamicModel, `${tableName}.js`);
+
+      // try {
+      //   await fs.access(filePath); // Check if file exists
+      //   console.log(`Model for table "${tableName}" already exists. Skipping...`);
+      //   continue;
+      // } catch {
+      //   // File does not exist, proceed to write it
+      // }
+
+      const dynamicIndexData = await fs.readFile(moduleExporting, "utf8");
+      const updatedDynamicIndex = appendKeyToModuleExports(dynamicIndexData, tableName);
+      await fs.writeFile(moduleExporting, updatedDynamicIndex);
+
+      await fs.writeFile(filePath, modelTemplate);
+      console.log(`Model written to file: ${filePath}`);
     }
+
+    return res.status(200).json({
+      message: "Models created successfully",
+      data: getAllTables,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: error?.message || "Something went wrong",
+      data: error,
+    });
+  }
 };

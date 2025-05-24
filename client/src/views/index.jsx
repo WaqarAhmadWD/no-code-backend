@@ -84,6 +84,18 @@ export default function Home() {
       }
     }
   };
+  const operation = async (url,method="GET")=>{
+    const result = await dispatch(
+      fetchData({
+        url,
+        method,
+        data: formAdd,
+      })
+    ).unwrap();
+    if(!result?.error){
+      fetchDataLocal();
+    }
+  }
   const handleAdd = async () => {
     const result = await dispatch(
       fetchData({
@@ -115,7 +127,7 @@ export default function Home() {
   }, []);
   return (
     <>
-      <div className="flex flex-col  px-4">
+      <div className="flex flex-col p-16">
         <div className="flex w-full items-center justify-between p-4 ">
           <div className="relative ">
             <select
@@ -147,6 +159,12 @@ export default function Home() {
               className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
             >
               Add New Data
+            </button>
+                <button
+               onClick={() => {operation("/rest-of/flush");}}
+              className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
+            >
+              Flush
             </button>
             {isOpenAdd && (
               <div className="popup fixed inset-0 flex items-center justify-center bg-black bg-opacity-5">

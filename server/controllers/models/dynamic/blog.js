@@ -3,19 +3,14 @@
       const blog = sequelize.define(
         'blog',
         {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    allowNull: false
-  },
-  name: {
-    type: Sequelize.STRING,
-    allowNull: true
+  title: {
+    type: Sequelize.STRING
   },
   description: {
-    type: Sequelize.STRING,
-    allowNull: true
+    type: Sequelize.STRING
+  },
+  counter: {
+    type: Sequelize.INTEGER
   }
 },
         {

@@ -29,7 +29,6 @@ module.exports = async (req, res, { httpMethod, module, method, id }) => {
       }
       const model = sequelize.models[module];
 
-      console.log(hasReferences)
       const columns = Object.keys(model.rawAttributes);
       let columns_found = [];
       if(req?.search){

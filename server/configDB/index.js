@@ -1,5 +1,4 @@
 const Sequelize = require("sequelize");
-const {createTables} = require("../controllers/operation_perfomer/db_operations");
 require("dotenv").config();
 const db = {};
 
@@ -33,7 +32,7 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 db.module  = require("../controllers/models")(sequelize,Sequelize);
 db.dynamic_module  = require("../controllers/models/dynamic_index")(sequelize,Sequelize);
-createTables(db.module);
+
 // assocications 
 // super many to many association of field and table
 db.module.field.hasMany(db.module.assign_field_table,{
