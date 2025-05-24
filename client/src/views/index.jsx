@@ -5,6 +5,31 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 export default function Home() {
+function formatObject(input) {
+  if(!Array.isArray(input) && typeof input !=="object"){
+    return input;
+  }
+  const excludedKeys = ['id', 'created_at', 'updated_at'];
+
+  // If the input is an array, handle each object in the array
+  if (Array.isArray(input)) {
+    return input
+      .map(obj =>
+        Object.entries(obj)
+          .filter(([key]) => !excludedKeys.includes(key))
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ')
+      )
+      .join(' | '); // Join individual object results with ' | '
+  }
+
+  // If it's a single object, process it as before
+  return Object.entries(input)
+    .filter(([key]) => !excludedKeys.includes(key))
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ');
+}
+
   const navigator = useNavigate();
   const [selected, setSelected] = useState({
     module: "",
@@ -256,7 +281,9 @@ export default function Home() {
                         className="py-3 px-6 text-left text-xs text-black"
                         key={e}
                       >
-                        {item[e]}
+                        <pre>
+                        {formatObject(item[e])}
+                        </pre>
                       </td>
                     ))}
 
