@@ -1,47 +1,20 @@
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { fetchData } from "../store/slices/apiSlices.js";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { notAllowed, formatObject, stripIdSuffix } from "../utils/index.js";
 import Swal from "sweetalert2";
 export default function Home() {
-function formatObject(input) {
-  if(!Array.isArray(input) && typeof input !=="object"){
-    return input;
-  }
-  const excludedKeys = ['id', 'created_at', 'updated_at'];
-
-  // If the input is an array, handle each object in the array
-  if (Array.isArray(input)) {
-    return input
-      .map(obj =>
-        Object.entries(obj)
-          .filter(([key]) => !excludedKeys.includes(key))
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ')
-      )
-      .join(' | '); // Join individual object results with ' | '
-  }
-
-  // If it's a single object, process it as before
-  return Object.entries(input)
-    .filter(([key]) => !excludedKeys.includes(key))
-    .map(([key, value]) => `${key}: ${value}`)
-    .join(', ');
-}
-
-  const navigator = useNavigate();
   const [selected, setSelected] = useState({
     module: "",
     column: "",
   });
-  const notAllowed = ["id","created_at","updated_at"];
   const [module, setModule] = useState([]);
   const [column, setColumn] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenAdd, setIsOpenAdd] = useState(false);
-  const [formAdd,setFormAdd] = useState({});
-  const [formEdit,setFormEdit] = useState({});
+  const [columnAssocited, setColumnAssocited] = useState({});
+  const [formAdd, setFormAdd] = useState({});
+  const [formEdit, setFormEdit] = useState({});
   const [data, setData] = useState([]);
   const dispatch = useDispatch();
   const fetchDataLocal = async () => {
@@ -57,15 +30,15 @@ function formatObject(input) {
       fetchData({ url: `/dynamic/${module}/column` })
     ).unwrap();
     if (!result.error) {
-        setFormAdd(() => {
-            const initialState = {};
-            result.data.map((col) => {
-                if(notAllowed.every(e=>e!=col)){
-                    initialState[col] = ""; // Initialize each column with an empty string
-                }
-            });
-            return initialState;
-        })
+      setFormAdd(() => {
+        const initialState = {};
+        result.data.map((col) => {
+          if (notAllowed.every((e) => e != col)) {
+            initialState[col] = ""; // Initialize each column with an empty string
+          }
+        });
+        return initialState;
+      });
       setColumn(result?.data);
     }
     const data = await dispatch(
@@ -84,7 +57,11 @@ function formatObject(input) {
     ).unwrap();
     if (!result.error) {
       const data = await dispatch(
-        fetchData({ url: `/dynamic/${selected?.module}/get`,loading:false,message:false })
+        fetchData({
+          url: `/dynamic/${selected?.module}/get`,
+          loading: false,
+          message: false,
+        })
       ).unwrap();
       if (!data.error) {
         setData(data?.data);
@@ -96,20 +73,24 @@ function formatObject(input) {
       fetchData({
         url: `/dynamic/${selected?.module}/edit/${id}`,
         method: "PUT",
-        data:formEdit
+        data: formEdit,
       })
     ).unwrap();
     if (!result.error) {
-        setIsOpen(false);
+      setIsOpen(false);
       const data = await dispatch(
-        fetchData({ url: `/dynamic/${selected?.module}/get`,loading:false,message:false })
+        fetchData({
+          url: `/dynamic/${selected?.module}/get`,
+          loading: false,
+          message: false,
+        })
       ).unwrap();
       if (!data.error) {
         setData(data?.data);
       }
     }
   };
-  const operation = async (url,method="GET")=>{
+  const operation = async (url, method = "GET") => {
     const result = await dispatch(
       fetchData({
         url,
@@ -117,10 +98,10 @@ function formatObject(input) {
         data: formAdd,
       })
     ).unwrap();
-    if(!result?.error){
+    if (!result?.error) {
       fetchDataLocal();
     }
-  }
+  };
   const handleAdd = async () => {
     const result = await dispatch(
       fetchData({
@@ -130,9 +111,13 @@ function formatObject(input) {
       })
     ).unwrap();
     if (!result.error) {
-        setIsOpenAdd(false)
+      setIsOpenAdd(false);
       const data = await dispatch(
-        fetchData({ url: `/dynamic/${selected?.module}/get`,loading:false,message:false })
+        fetchData({
+          url: `/dynamic/${selected?.module}/get`,
+          loading: false,
+          message: false,
+        })
       ).unwrap();
       if (!data.error) {
         setData(data?.data);
@@ -144,12 +129,38 @@ function formatObject(input) {
       fetchData({ url: `/dynamic/${selected?.module}/get/${id}` })
     ).unwrap();
     if (!result.error) {
-        setFormEdit(result?.data);
+      setFormEdit(result?.data);
     }
   };
   useEffect(() => {
     fetchDataLocal();
   }, []);
+  useEffect(() => {
+    const fetchAssociatedColumns = async () => {
+      const associated = column.filter((elem) => elem.endsWith("_id"));
+
+      const associatedDataArray = await Promise.all(
+        associated.map(async (e) => {
+          const res = await dispatch(
+            fetchData({ url: `/dynamic/${e.slice(0, -3)}/get` })
+          ).unwrap();
+          return { [e]: res?.data };
+        })
+      );
+
+      // Merge array of objects into a single object
+      const associatedData = Object.assign({}, ...associatedDataArray);
+
+      // Now you have: { field: [...], attribute: [...] }
+      setColumnAssocited(associatedData);
+
+      setColumnAssocited(associatedData);
+    };
+
+    if (isOpenAdd) {
+      fetchAssociatedColumns();
+    }
+  }, [isOpenAdd]);
   return (
     <>
       <div className="flex flex-col p-16">
@@ -185,8 +196,10 @@ function formatObject(input) {
             >
               Add New Data
             </button>
-                <button
-               onClick={() => {operation("/rest-of/flush");}}
+            <button
+              onClick={() => {
+                operation("/rest-of/flush");
+              }}
               className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
             >
               Flush
@@ -220,20 +233,57 @@ function formatObject(input) {
                   {/* Close button */}
                   <div className="modal-body">
                     <div className="space-y-4">
-                       <div>
-                        {column && column.map(elem=> notAllowed.every(el=>el!=elem) && (<input
-                          type="text"
-                          key={elem}
-                          placeholder={elem}
-                          value={formAdd[elem]}
-                          onChange={(e) => {
-                            setFormAdd((prevForm) => ({
-                                ...prevForm,
-                                [elem]:  e.target.value, // Update the specific field in the formAdd state
-                            }));
-                        }}
-                          className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
-                        />))}
+                      <div>
+                        {column &&
+                          column.map(
+                            (elem) =>
+                              notAllowed.every((el) => el != elem) &&
+                              !elem.endsWith("_id") && (
+                                <input
+                                  type="text"
+                                  key={elem}
+                                  placeholder={elem}
+                                  value={formAdd[elem]}
+                                  onChange={(e) => {
+                                    setFormAdd((prevForm) => ({
+                                      ...prevForm,
+                                      [elem]: e.target.value, // Update the specific field in the formAdd state
+                                    }));
+                                  }}
+                                  className="form-control w-full mb-4 md:w-[300px] py-1.5 px-9 border rounded-md"
+                                />
+                              )
+                          )}
+                        {column &&
+                          column.map(
+                            (elem) =>
+                              notAllowed.every((el) => el != elem) &&
+                              elem.endsWith("_id") && (
+                                <select
+                                  type="number"
+                                  key={elem}
+                                  placeholder={elem}
+                                  value={formAdd[elem]}
+                                  onChange={(e) => {
+                                    setFormAdd((prevForm) => ({
+                                      ...prevForm,
+                                      [elem]: e.target.value, // Update the specific field in the formAdd state
+                                    }));
+                                  }}
+                                  className="form-control w-full mb-4 md:w-[300px] py-1.5 px-9 border rounded-md"
+                                >
+                                  {columnAssocited[elem] &&
+                                    columnAssocited[elem].map((e, idx) => (
+                                      <option
+                                        key={idx}
+                                        value={e.id || e._id || idx}
+                                      >
+                                        {formatObject(e)}
+                                      </option>
+                                    ))}
+                                </select>
+                              )
+                          )}
                       </div>
 
                       <div className="text-center">
@@ -276,16 +326,20 @@ function formatObject(input) {
                   className="border-b border-gray-200 hover:bg-gray-100"
                 >
                   {item &&
-                    Object.keys(item).map((e) => (
-                      <td
-                        className="py-3 px-6 text-left text-xs text-black"
-                        key={e}
-                      >
-                        <pre>
-                        {formatObject(item[e])}
-                        </pre>
-                      </td>
-                    ))}
+                    Object.keys(item).map((e) => {
+                      const exits = column.find((ele) => ele === e);
+                      if (!exits) {
+                        return null;
+                      }
+                      return (
+                        <td
+                          className="py-3 px-6 text-left text-xs text-black"
+                          key={e}
+                        >
+                          <pre>{formatObject(item[stripIdSuffix(e)])}</pre>
+                        </td>
+                      );
+                    })}
 
                   <td className="py-3 px-6 text-left text-xs text-black">
                     <div className="flex item-center justify-center">
@@ -293,8 +347,11 @@ function formatObject(input) {
                         {/* Button to open the modal */}
                         <button
                           className="px-4 py-2 rounded"
-                        onClick={()=>{setIsOpen(item?.id);fetchSingle(item?.id)}}
-                       >
+                          onClick={() => {
+                            setIsOpen(item?.id);
+                            fetchSingle(item?.id);
+                          }}
+                        >
                           <svg
                             width="23"
                             height="23"
@@ -319,64 +376,74 @@ function formatObject(input) {
                           </svg>
                         </button>
                         {isOpen === item?.id && (
-              <div className="popup fixed inset-0 flex items-center justify-center bg-black bg-opacity-5">
-                <div className="bg-white p-6 rounded shadow-lg w-96">
-                  <div className="mb-5 flex flex-row items-center justify-between">
-                    <h2 className="text-lg font-semibold blue-text">
-                      {selected?.module}
-                    </h2>
-                    <button
-                      className="rounded-full  text-white px-2 py-1 "
-                      onClick={() => {setIsOpen(null);}}
-                    >
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 2C17.53 2 22 6.47 22 12C22 17.53 17.53 22 12 22C6.47 22 2 17.53 2 12C2 6.47 6.47 2 12 2ZM15.59 7L12 10.59L8.41 7L7 8.41L10.59 12L7 15.59L8.41 17L12 13.41L15.59 17L17 15.59L13.41 12L17 8.41L15.59 7Z"
-                          fill="#4A90E2"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                          <div className="popup fixed inset-0 flex items-center justify-center bg-black bg-opacity-5">
+                            <div className="bg-white p-6 rounded shadow-lg w-96">
+                              <div className="mb-5 flex flex-row items-center justify-between">
+                                <h2 className="text-lg font-semibold blue-text">
+                                  {selected?.module}
+                                </h2>
+                                <button
+                                  className="rounded-full  text-white px-2 py-1 "
+                                  onClick={() => {
+                                    setIsOpen(null);
+                                  }}
+                                >
+                                  <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M12 2C17.53 2 22 6.47 22 12C22 17.53 17.53 22 12 22C6.47 22 2 17.53 2 12C2 6.47 6.47 2 12 2ZM15.59 7L12 10.59L8.41 7L7 8.41L10.59 12L7 15.59L8.41 17L12 13.41L15.59 17L17 15.59L13.41 12L17 8.41L15.59 7Z"
+                                      fill="#4A90E2"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
 
-                  {/* Close button */}
-                  <div className="modal-body">
-                    <div className="space-y-4 ">
-                       <div className="flex flex-col gap-4">
-                        {column && column.map(elem=> notAllowed.every(el=>el!=elem) && (<input
-                          type="text"
-                          key={elem}
-                          placeholder={elem}
-                          value={formEdit[elem]}
-                          onChange={(e) => {
-                            setFormEdit((prevForm) => ({
-                                ...prevForm,
-                                [elem]:  e.target.value, // Update the specific field in the formAdd state
-                            }));
-                        }}
-                          className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
-                        />))}
-                      </div>
+                              {/* Close button */}
+                              <div className="modal-body">
+                                <div className="space-y-4 ">
+                                  <div className="flex flex-col gap-4">
+                                    {column &&
+                                      column.map(
+                                        (elem) =>
+                                          notAllowed.every(
+                                            (el) => el != elem
+                                          ) && (
+                                            <input
+                                              type="text"
+                                              key={elem}
+                                              placeholder={elem}
+                                              value={formEdit[elem]}
+                                              onChange={(e) => {
+                                                setFormEdit((prevForm) => ({
+                                                  ...prevForm,
+                                                  [elem]: e.target.value, // Update the specific field in the formAdd state
+                                                }));
+                                              }}
+                                              className="form-control w-full md:w-[300px] py-1.5 px-9 border rounded-md"
+                                            />
+                                          )
+                                      )}
+                                  </div>
 
-                      <div className="text-center">
-                        <button
-                          type="submit"
-                          className=" text-white blue-bg text-sm px-5 py-2 rounded-md text-center "
-                          onClick={() => handleEdit(isOpen)}
-                        >
-                          Submit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+                                  <div className="text-center">
+                                    <button
+                                      type="submit"
+                                      className=" text-white blue-bg text-sm px-5 py-2 rounded-md text-center "
+                                      onClick={() => handleEdit(isOpen)}
+                                    >
+                                      Submit
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <button

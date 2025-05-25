@@ -28,46 +28,52 @@ module.exports = async (req, res, { httpMethod, module, method, id }) => {
         .map((e) => e?.references || null)
         .filter((e) => e != null);
     }
-    if (httpMethod === "GET" && method === "get") {
-      if (id) {
-        const data = await moduler.findByPk(id);
-        if (!data) {
-          return res.status(404).json({ message: `${module} data not found` });
-        }
-        return res
-          .status(200)
-          .json({ message: `${module} data fetched successfully`, data });
-      }
-
-      const columns = Object.keys(moduler.rawAttributes);
-      let columns_found = [];
-      if (req?.search) {
-        columns_found = columns
-          .map((column) => {
-            if (column !== "created_at" && column !== "updated_at") {
-              return { [column]: req.search };
-            } else {
-              return null;
-            }
-          })
-          .filter((column) => column != null);
-      }
-      if (req.search) {
-        where = { ...where, [Op.or]: columns_found };
-      }
-      includes = Object.values(moduler.associations).map((assoc) => ({
-        model: assoc.target,
-        as: assoc.as,
-      }));
-      const data = await moduler.findAll({
-        ...req.pagination,
-        where,
-        include: includes,
-      });
-      return res
-        .status(200)
-        .json({ message: `${module} data fetched successfully`, data });
+if (httpMethod === "GET" && method === "get") {
+  if (id) {
+    const data = await moduler.findByPk(id);
+    if (!data) {
+      return res.status(404).json({ message: `${module} data not found` });
     }
+    return res
+      .status(200)
+      .json({ message: `${module} data fetched successfully`, data });
+  }
+
+  const columns = Object.keys(moduler.rawAttributes);
+  let columns_found = [];
+
+  if (req?.search) {
+    columns_found = columns
+      .filter((column) => column !== "created_at" && column !== "updated_at")
+      .map((column) => ({ [column]: req.search }));
+  }
+
+  if (req.search) {
+    where = { ...where, [Op.or]: columns_found };
+  }
+
+  // Only include associations whose foreign key exists in rawAttributes
+  const includes = Object.values(moduler.associations)
+    .filter((assoc) => {
+      const foreignKey = assoc.foreignKey;
+      return foreignKey && columns.includes(foreignKey);
+    })
+    .map((assoc) => ({
+      model: assoc.target,
+      as: assoc.as,
+    }));
+
+  const data = await moduler.findAll({
+    ...req.pagination,
+    where,
+    include: includes,
+  });
+
+  return res
+    .status(200)
+    .json({ message: `${module} data fetched successfully`, data });
+}
+
     if (httpMethod === "GET" && method === "column") {
       const columns = Object.keys(moduler.rawAttributes);
       return res
